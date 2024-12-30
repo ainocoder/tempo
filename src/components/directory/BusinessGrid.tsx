@@ -6,7 +6,7 @@ interface Business {
   id: string;
   name: string;
   image: string;
-  category: string;
+  category: string[];
   rating: number;
   priceRange: string;
   description: string;
@@ -23,7 +23,7 @@ const defaultBusinesses: Business[] = [
     name: "Cafe Delights",
     image:
       "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop",
-    category: "Cafe",
+    category: ["Cafe"],
     rating: 4.8,
     priceRange: "2만원대",
     description: "A cozy cafe serving artisanal coffee and fresh pastries.",
@@ -33,7 +33,7 @@ const defaultBusinesses: Business[] = [
     name: "Tech Hub Store",
     image:
       "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800&auto=format&fit=crop",
-    category: "Electronics",
+    category: ["Electronics"],
     rating: 4.5,
     priceRange: "3만원대",
     description: "Your one-stop shop for all things technology.",
@@ -43,7 +43,7 @@ const defaultBusinesses: Business[] = [
     name: "Green Gardens",
     image:
       "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&auto=format&fit=crop",
-    category: "Nursery",
+    category: ["Nursery"],
     rating: 4.9,
     priceRange: "1만원대",
     description: "Expert plant care and beautiful botanical selections.",
@@ -74,6 +74,7 @@ const BusinessGrid = ({
         {businesses.map((business) => (
           <BusinessCard
             key={business.id}
+            id={business.id}
             name={business.name}
             image={business.image}
             category={business.category}

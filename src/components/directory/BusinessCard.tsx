@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,24 +12,31 @@ import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 
 interface BusinessCardProps {
+  id: string;
   name: string;
   image: string;
-  category: string;
+  category: string[];
   rating: number;
   priceRange: string;
   description: string;
 }
 
 const BusinessCard = ({
+  id = "1",
   name = "Sample Business",
   image = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop",
-  category = "Restaurant",
+  category = ["Restaurant"],
   rating = 4.5,
-  priceRange = "$$",
+  priceRange = "2만원대",
   description = "A wonderful establishment offering great service and products to our valued customers.",
 }: BusinessCardProps) => {
+  const navigate = useNavigate();
+
   return (
-    <Card className="w-full max-w-[384px] h-[320px] overflow-hidden hover:shadow-lg transition-shadow bg-white">
+    <Card
+      className="w-full max-w-[384px] h-[320px] overflow-hidden hover:shadow-lg transition-shadow bg-white cursor-pointer"
+      onClick={() => navigate(`/business/${id}`)}
+    >
       <div className="relative h-40 w-full overflow-hidden">
         <img src={image} alt={name} className="w-full h-full object-cover" />
         <div className="absolute top-2 right-2">
@@ -48,9 +56,19 @@ const BusinessCard = ({
             <span className="text-sm font-medium">{rating}</span>
           </div>
         </div>
-        <Badge variant="outline" className="w-fit">
-          {category}
-        </Badge>
+        <div className="flex flex-wrap gap-2">
+          {Array.isArray(category) ? (
+            category.map((cat, index) => (
+              <Badge key={index} variant="outline" className="w-fit">
+                {cat}
+              </Badge>
+            ))
+          ) : (
+            <Badge variant="outline" className="w-fit">
+              {category}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>

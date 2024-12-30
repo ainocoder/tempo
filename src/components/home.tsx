@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import SearchHeader from "./directory/SearchHeader";
 import FilterSidebar from "./directory/FilterSidebar";
 import BusinessGrid from "./directory/BusinessGrid";
+import { useBusinesses } from "@/hooks/useBusinesses";
 
 interface HomeProps {
   initialSearchQuery?: string;
@@ -9,47 +10,12 @@ interface HomeProps {
   isSidebarOpen?: boolean;
 }
 
-const defaultBusinesses = [
-  {
-    id: "1",
-    name: "Downtown Cafe",
-    image:
-      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop",
-    category: "Restaurant",
-    rating: 4.5,
-    priceRange: "2만원대",
-    description: "A cozy cafe in the heart of downtown.",
-    location: "Downtown",
-  },
-  {
-    id: "2",
-    name: "Tech Store",
-    image:
-      "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800&auto=format&fit=crop",
-    category: "Retail",
-    rating: 4.8,
-    priceRange: "3만원대",
-    description: "Latest gadgets and tech accessories.",
-    location: "West End",
-  },
-  {
-    id: "3",
-    name: "Fitness Center",
-    image:
-      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop",
-    category: "Health & Fitness",
-    rating: 4.7,
-    priceRange: "2만원대",
-    description: "Modern gym with state-of-the-art equipment.",
-    location: "East Side",
-  },
-];
-
 const Home = ({
   initialSearchQuery = "",
   initialSortValue = "relevance",
   isSidebarOpen = true,
 }: HomeProps) => {
+  const { businesses, loading } = useBusinesses();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [sortValue, setSortValue] = useState(initialSortValue);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
@@ -59,66 +25,68 @@ const Home = ({
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedRating, setSelectedRating] = useState<number>(1);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
-  const [filteredBusinesses, setFilteredBusinesses] =
-    useState(defaultBusinesses);
 
-  useEffect(() => {
-    let filtered = [...defaultBusinesses];
+  // Map the businesses data to match the expected format
+  const displayBusinesses = businesses.map((business) => ({
+    ...business,
+    priceRange: business.price_range,
+  }));
 
+  // Apply filters
+  const filteredBusinesses = displayBusinesses.filter((business) => {
     // Apply location filter
-    if (selectedLocations.length > 0) {
-      filtered = filtered.filter((business) =>
-        selectedLocations.includes(business.location),
-      );
+    if (
+      selectedLocations.length > 0 &&
+      !selectedLocations.includes(business.location)
+    ) {
+      return false;
     }
 
     // Apply category filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((business) =>
-        selectedCategories.includes(business.category),
-      );
+    if (
+      selectedCategories.length > 0 &&
+      !selectedCategories.includes(business.category)
+    ) {
+      return false;
     }
 
     // Apply rating filter
-    filtered = filtered.filter((business) => business.rating >= selectedRating);
+    if (business.rating < selectedRating) {
+      return false;
+    }
 
     // Apply price range filter
-    if (selectedPriceRanges.length > 0) {
-      filtered = filtered.filter((business) =>
-        selectedPriceRanges.includes(business.priceRange),
-      );
+    if (
+      selectedPriceRanges.length > 0 &&
+      !selectedPriceRanges.includes(business.priceRange)
+    ) {
+      return false;
     }
 
     // Apply search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (business) =>
-          business.name.toLowerCase().includes(query) ||
-          business.description.toLowerCase().includes(query) ||
-          business.category.toLowerCase().includes(query),
+      return (
+        business.name.toLowerCase().includes(query) ||
+        business.description.toLowerCase().includes(query) ||
+        business.category.toLowerCase().includes(query)
       );
     }
 
-    // Apply sorting
+    return true;
+  });
+
+  // Apply sorting
+  const sortedBusinesses = [...filteredBusinesses].sort((a, b) => {
     switch (sortValue) {
       case "rating":
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
+        return b.rating - a.rating;
       case "alphabetical":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
+        return a.name.localeCompare(b.name);
+      default:
+        return 0;
     }
-
-    setFilteredBusinesses(filtered);
-  }, [
-    searchQuery,
-    sortValue,
-    selectedLocations,
-    selectedCategories,
-    selectedRating,
-    selectedPriceRanges,
-  ]);
+  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -166,7 +134,7 @@ const Home = ({
 
         {/* Main Content */}
         <div className="flex-1">
-          <BusinessGrid businesses={filteredBusinesses} />
+          <BusinessGrid businesses={sortedBusinesses} isLoading={loading} />
         </div>
       </div>
     </div>

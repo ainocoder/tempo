@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, DollarSign, Star, Tags } from "lucide-react";
+import { useBusinesses } from "@/hooks/useBusinesses";
 
 interface FilterSidebarProps {
   onLocationChange?: (locations: string[]) => void;
@@ -24,23 +25,8 @@ const FilterSidebar = ({
   onRatingChange = () => {},
   onPriceRangeChange = () => {},
 }: FilterSidebarProps) => {
-  const locations = [
-    "Downtown",
-    "West End",
-    "East Side",
-    "North District",
-    "South Bay",
-  ];
-
-  const categories = [
-    "Restaurants",
-    "Retail",
-    "Services",
-    "Entertainment",
-    "Health & Fitness",
-  ];
-
-  const priceRanges = ["1만원대", "2만원대", "3만원대", "4만원대"];
+  const { uniqueLocations, uniqueCategories, uniquePriceRanges } =
+    useBusinesses();
 
   // Local state for selected items
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -87,7 +73,7 @@ const FilterSidebar = ({
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 pt-2">
-                {locations.map((location) => (
+                {uniqueLocations.map((location) => (
                   <div key={location} className="flex items-center space-x-2">
                     <Checkbox
                       id={`location-${location}`}
@@ -110,7 +96,7 @@ const FilterSidebar = ({
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 pt-2">
-                {categories.map((category) => (
+                {uniqueCategories.map((category) => (
                   <div key={category} className="flex items-center space-x-2">
                     <Checkbox
                       id={`category-${category}`}
@@ -155,7 +141,7 @@ const FilterSidebar = ({
             </AccordionTrigger>
             <AccordionContent>
               <div className="flex flex-wrap gap-2 pt-2">
-                {priceRanges.map((price) => (
+                {uniquePriceRanges.map((price) => (
                   <Badge
                     key={price}
                     variant={
