@@ -10,6 +10,7 @@ interface Business {
   rating: number;
   priceRange: string;
   description: string;
+  location: string;
 }
 
 interface BusinessGridProps {
@@ -27,6 +28,7 @@ const defaultBusinesses: Business[] = [
     rating: 4.8,
     priceRange: "2만원대",
     description: "A cozy cafe serving artisanal coffee and fresh pastries.",
+    location: "YouTube",
   },
   {
     id: "2",
@@ -37,6 +39,7 @@ const defaultBusinesses: Business[] = [
     rating: 4.5,
     priceRange: "3만원대",
     description: "Your one-stop shop for all things technology.",
+    location: "Instagram",
   },
   {
     id: "3",
@@ -47,6 +50,7 @@ const defaultBusinesses: Business[] = [
     rating: 4.9,
     priceRange: "1만원대",
     description: "Expert plant care and beautiful botanical selections.",
+    location: "TikTok",
   },
 ];
 
@@ -69,8 +73,8 @@ const BusinessGrid = ({
   }
 
   return (
-    <div className="w-full h-full bg-gray-50 p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="w-full h-full bg-gray-50 p-6 flex gap-x-12">
+      <div className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 flex gap-[15.5px]">
         {businesses.map((business) => (
           <BusinessCard
             key={business.id}
@@ -81,6 +85,8 @@ const BusinessGrid = ({
             rating={business.rating}
             priceRange={business.priceRange}
             description={business.description}
+            location={business.location}
+            className="mx-[8.25px] flex flex-row gap-[7px]"
           />
         ))}
       </div>

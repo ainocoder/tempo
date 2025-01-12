@@ -1,15 +1,139 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Star, MapPin, DollarSign } from "lucide-react";
+import { ArrowLeft, Star, MapPin, DollarSign, Calendar } from "lucide-react";
 import { useBusiness } from "@/hooks/useBusiness";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/lib/supabase";
+import { format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+
+interface Reservation {
+  id: string;
+  business_id: string;
+  user_id: string;
+  reservation_date: string;
+  reservation_time: string;
+  status: "pending" | "confirmed" | "cancelled";
+}
 
 const BusinessDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { business, loading } = useBusiness(id);
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [time, setTime] = useState<string>("");
+  const [existingReservations, setExistingReservations] = useState<
+    Reservation[]
+  >([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  // Generate time slots (30-minute intervals from 9 AM to 9 PM)
+  const timeSlots = Array.from({ length: 24 }, (_, i) => {
+    const hour = Math.floor(i / 2) + 9;
+    const minute = i % 2 === 0 ? "00" : "30";
+    if (hour < 21) {
+      return `${hour.toString().padStart(2, "0")}:${minute}`;
+    }
+    return null;
+  }).filter(Boolean) as string[];
+
+  // Fetch existing reservations
+  useEffect(() => {
+    const fetchReservations = async () => {
+      if (!id) return;
+
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("*")
+        .eq("business_id", id);
+
+      if (error) {
+        console.error("Error fetching reservations:", error);
+        return;
+      }
+
+      setExistingReservations(data || []);
+    };
+
+    fetchReservations();
+  }, [id]);
+
+  // Check if a time slot is already reserved
+  const isTimeSlotReserved = (date: Date, timeSlot: string) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    return existingReservations.some(
+      (res) =>
+        res.reservation_date === dateStr && res.reservation_time === timeSlot,
+    );
+  };
+
+  const handleReservation = async () => {
+    if (!date || !time || !id) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("User not found");
+
+      // Create reservation
+      const { data, error } = await supabase
+        .from("reservations")
+        .insert([
+          {
+            business_id: id,
+            user_id: user.id,
+            reservation_date: format(date, "yyyy-MM-dd"),
+            reservation_time: time,
+            status: "pending",
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "예약이 완료되었습니다",
+        description: `${format(date, "yyyy년 MM월 dd일")} ${time}`,
+      });
+
+      // Add the new reservation to the local state
+      setExistingReservations([...existingReservations, data]);
+    } catch (error) {
+      console.error("Error creating reservation:", error);
+      toast({
+        title: "예약 실패",
+        description: "예약 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -79,6 +203,69 @@ const BusinessDetail = () => {
               </span>
             </div>
           </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                예약하기
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>예약 날짜와 시간 선택</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div>
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border"
+                    disabled={(date) => date < new Date()}
+                    modifiers={{
+                      booked: (date) =>
+                        timeSlots.every((slot) =>
+                          isTimeSlotReserved(date, slot),
+                        ),
+                    }}
+                    modifiersStyles={{
+                      booked: { textDecoration: "line-through", opacity: 0.5 },
+                    }}
+                  />
+                </div>
+                {date && (
+                  <Select value={time} onValueChange={setTime}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="시간 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeSlots.map((slot) => {
+                        const isReserved = isTimeSlotReserved(date, slot);
+                        return (
+                          <SelectItem
+                            key={slot}
+                            value={slot}
+                            disabled={isReserved}
+                          >
+                            {slot}
+                            {isReserved && " (예약됨)"}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleReservation}
+                  disabled={!date || !time || isSubmitting}
+                >
+                  {isSubmitting ? "예약 중..." : "예약 확정"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">

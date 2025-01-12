@@ -9,7 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star } from "lucide-react";
+import { Separator } from "./../ui/separator";
+import { Star, MapPin } from "lucide-react";
 
 interface BusinessCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface BusinessCardProps {
   rating: number;
   priceRange: string;
   description: string;
+  location: string;
 }
 
 const BusinessCard = ({
@@ -29,6 +31,7 @@ const BusinessCard = ({
   rating = 4.5,
   priceRange = "2만원대",
   description = "A wonderful establishment offering great service and products to our valued customers.",
+  location = "YouTube", // Changed default to match FilterSidebar
 }: BusinessCardProps) => {
   const navigate = useNavigate();
 
@@ -45,7 +48,6 @@ const BusinessCard = ({
           </Badge>
         </div>
       </div>
-
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold truncate">
@@ -70,20 +72,18 @@ const BusinessCard = ({
           )}
         </div>
       </CardHeader>
-
       <CardContent>
         <CardDescription className="line-clamp-2 text-sm text-gray-600">
           {description}
         </CardDescription>
       </CardContent>
-
       <CardFooter className="pt-0">
-        <div className="flex gap-2">
-          <Badge variant="secondary" className="text-xs">
-            Delivery
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            Takeout
+        <div className="flex items-center gap-2 text-gray-600">
+          <Badge
+            variant="secondary"
+            className="text-xs flex items-center gap-1"
+          >
+            <MapPin className="w-3 h-3" /> {location}
           </Badge>
         </div>
       </CardFooter>

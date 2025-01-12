@@ -43,11 +43,13 @@ const Home = ({
     }
 
     // Apply category filter
-    if (
-      selectedCategories.length > 0 &&
-      !selectedCategories.includes(business.category)
-    ) {
-      return false;
+    if (selectedCategories.length > 0) {
+      const hasMatchingCategory = business.category.some((cat) =>
+        selectedCategories.includes(cat),
+      );
+      if (!hasMatchingCategory) {
+        return false;
+      }
     }
 
     // Apply rating filter
@@ -58,7 +60,7 @@ const Home = ({
     // Apply price range filter
     if (
       selectedPriceRanges.length > 0 &&
-      !selectedPriceRanges.includes(business.priceRange)
+      !selectedPriceRanges.includes(business.price_range)
     ) {
       return false;
     }
@@ -69,7 +71,7 @@ const Home = ({
       return (
         business.name.toLowerCase().includes(query) ||
         business.description.toLowerCase().includes(query) ||
-        business.category.toLowerCase().includes(query)
+        business.category.some((cat) => cat.toLowerCase().includes(query))
       );
     }
 
@@ -97,7 +99,6 @@ const Home = ({
         onSortChange={setSortValue}
         onFilterClick={() => setShowMobileSidebar(!showMobileSidebar)}
       />
-
       <div className="flex-1 flex">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block">
